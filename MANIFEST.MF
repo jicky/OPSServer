@@ -1,0 +1,8 @@
+Manifest-Version: 1.0
+Archiver-Version: Plexus Archiver
+Created-By: Apache Maven
+Built-By: Administrator
+Build-Jdk: 1.7.0_80
+Main-Class: com.zhiye.ops.OPSServer
+
+Class-Path: modbus4j-1.0..jar seroUtils-1.0..jar
