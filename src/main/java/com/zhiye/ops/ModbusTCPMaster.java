@@ -15,11 +15,14 @@ import com.serotonin.modbus4j.msg.ReadHoldingRegistersRequest;
 import com.serotonin.modbus4j.msg.ReadHoldingRegistersResponse;
 import com.serotonin.modbus4j.msg.ReadInputRegistersRequest;
 import com.serotonin.modbus4j.msg.ReadInputRegistersResponse;
+import com.serotonin.modbus4j.msg.WriteCoilRequest;
+import com.serotonin.modbus4j.msg.WriteCoilResponse;
 import com.serotonin.modbus4j.msg.WriteCoilsRequest;
 import com.serotonin.modbus4j.msg.WriteCoilsResponse;
 import com.serotonin.modbus4j.msg.WriteRegistersRequest;
 import com.serotonin.modbus4j.msg.WriteRegistersResponse;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -180,6 +183,36 @@ public class ModbusTCPMaster {
 		}
 		return list;
 	}
+	
+
+	/**
+	 * 类型为  “rHRs” 读保持寄存器上的内容 地址：40001-49999
+	 * 
+	 * @param slaveId
+	 *            从站地址
+	 * @param start
+	 *            起始地址的偏移量
+	 * @param len
+	 *            待读寄存器的个数
+	 */
+	public synchronized byte[] readHoldingRegistersByte(int slaveId, int start, int len) {
+		initMaster();
+		byte[] list=null;
+		try {
+			ReadHoldingRegistersRequest request = new ReadHoldingRegistersRequest(slaveId, start, len);
+			ReadHoldingRegistersResponse response = (ReadHoldingRegistersResponse) master.send(request);
+			if (response.isException()) {
+				System.out.println("Exception response: message=" + response.getExceptionMessage());
+			} else {
+				
+				list = response.getData();//.getShortData();
+
+			}
+		} catch (ModbusTransportException e) {
+			e.printStackTrace();
+		}
+		return list;
+	}
 
 	/**
 	 * 类型为 “wHRs” 批量写数据到保持寄存器  地址是 40001-49999
@@ -197,6 +230,10 @@ public class ModbusTCPMaster {
 		try {
 			WriteRegistersRequest request = new WriteRegistersRequest(slaveId, start, values);
 			WriteRegistersResponse response = (WriteRegistersResponse) master.send(request);
+			
+			//WriteCoilRequest rq = new WriteCoilRequest(1, 40, false);
+			//WriteCoilResponse response = (WriteCoilResponse) master.send(rq);
+			
 			if (response.isException()) {
 				System.out.println("Exception response: message=" + response.getExceptionMessage());
 			} else {
@@ -262,7 +299,7 @@ public class ModbusTCPMaster {
 			if (response.isException()) {
 				System.out.println("Exception response: message=" + response.getExceptionMessage());
 			} else {
-				System.out.println(response.getBooleanData()+"===="+Arrays.toString(response.getData())+"{{"+response.getShortData().length);
+				System.out.println(Arrays.toString(response.getData())+"----"+response.getData()[0]);
 				list = response.getData();
 
 			}
@@ -272,6 +309,37 @@ public class ModbusTCPMaster {
 		return list;
 	}
 	
+	
+	/**
+	 * 类型“wCs” 批量写数据到线圈  地址是：00001-09999
+	 * 
+	 * @param slaveId
+	 *            从站地址
+	 * @param start
+	 *            起始地址的偏移量
+	 * @param values
+	 *            待写数据
+	 */
+	public synchronized boolean writeCoilsByte(int slaveId, int start, boolean[] values) {
+		initMaster();
+		boolean isSuccess = false;
+		try {
+			WriteCoilsRequest request = new WriteCoilsRequest(slaveId, start, values);
+			WriteCoilsResponse response = (WriteCoilsResponse) master.send(request);
+			
+			//WriteCoilRequest rq = new WriteCoilRequest(1, 40, false);
+			///WriteCoilResponse response = (WriteCoilResponse) master.send(rq);
+			if (response.isException()) {
+				System.out.println("Exception response: message=" + response.getExceptionMessage());
+			} else {
+				isSuccess = true;
+				System.out.println("Success");
+			}
+		} catch (ModbusTransportException e) {
+			e.printStackTrace();
+		}
+		return isSuccess;
+	}
 	
 	/**
 	 * 类型“wCs” 批量写数据到线圈  地址是：00001-09999
@@ -300,7 +368,43 @@ public class ModbusTCPMaster {
 		}
 		return isSuccess;
 	}
+
+	public synchronized Map<Integer, Short> getValues(short[] values) throws ModbusTransportException, ErrorResponseException {
+		/// 创建Master
+		initMaster();
+
+		int slaveId = 1;
+		// master.setTimeout(5000);
+		Map<Integer, Short> valMap = new HashMap<Integer, Short>();
+		try {
+			
+			if (values.length > 0) {
+				for (short code : values) {
+					 short[] sht = readHoldingRegisters(slaveId, code, 1);
+					 valMap.put(Integer.parseInt(String.valueOf( code)),  sht[0]);
+				}
+			}
+		} finally {
+			// master.destroy();
+		}
+
+		// valMap.put(12,new BigDecimal("123.00"));
+		// valMap.put(16,new BigDecimal("456.00"));
+
+		return valMap;
+	}
 	
+	
+	 public static void main(String[] args) throws IOException, ModbusTransportException, ErrorResponseException{
+		 ModbusTCPMaster mtm = new ModbusTCPMaster("192.168.1.245",502);
+		 
+		 short[] sht1 = new short[1];
+		 sht1[0] = 1;
+	     mtm.getValues(sht1);
+
+
+
+	 }
 	
 	
 

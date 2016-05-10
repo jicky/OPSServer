@@ -1,6 +1,7 @@
 package com.zhiye.ops;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -71,13 +72,20 @@ public class OPSHandler extends IoHandlerAdapter {
 			if (this.readOrWrit.equals(Constant.TYPE_RDI)) { /// 读离散输入状态
 
 				boolean[] bools = modbusTCPMaster.readDiscreteInput(this.slaveId, this.start, this.len);
-				session.write("写入数据成功 " + bools);
+				session.write(bools);  ///读离散输入状态
 
 			} else if (this.readOrWrit.equals(Constant.TYPE_RHRS)) { /// 读数据
-				short[] shtAry = null;
+				/*short[] shtAry = null;
 				shtAry = modbusTCPMaster.readHoldingRegisters(this.slaveId, this.start, this.len);
-				session.write(arrayShortToStr(start, shtAry)); // 返回读取的数据
+				session.write(arrayShortToStr(start, shtAry)); // 返回读取的数据  读保持寄存器
+                */
+				
+				Map hasMap  = modbusTCPMaster.getValues(values);
 
+				session.write(objectMapper.writeValueAsString(hasMap));
+
+				
+				
 			} else if (this.readOrWrit.equals(Constant.TYPE_WHRS)) { /// 写数据
 																		/// ,并返回是否成功
 
@@ -89,13 +97,21 @@ public class OPSHandler extends IoHandlerAdapter {
 				}
 
 			} else if (this.readOrWrit.equals(Constant.TYPE_RCS)) {
-				boolean[] bolAry = null;
+				/*boolean[] bolAry = null;
 				bolAry = modbusTCPMaster.readCoils(this.slaveId, this.start, this.len);
+				session.write(arrayBoolToStr(bolAry));   // 返回读取线圈的数据*/
+				
+				short[] sht=new short[4];
+				sht[0]=40;
+				sht[1]=41;
+				System.out.println("------------111测试数据11");				
+				Map hasMap  = modbusTCPMaster.getValues(sht);
 
-				session.write(arrayBoolToStr(bolAry)); // 返回读取的数据
+				session.write(objectMapper.writeValueAsString(hasMap));
+
 
 			} else if (this.readOrWrit.equals(Constant.TYPE_WCS)) {
-				System.out.print(this.boolArray + "------" + this.boolArray.length);
+				//System.out.print(this.boolArray + "------" + this.boolArray.length);
 				boolean[] bolA = new boolean[1];
 				bolA[0] = true;
 				boolean isWrite = modbusTCPMaster.writeCoils(this.slaveId, this.start, bolA);
@@ -108,7 +124,7 @@ public class OPSHandler extends IoHandlerAdapter {
 
 			} else if (this.readOrWrit.equals(Constant.TYPE_RIRS)) {
 				boolean[] bools = modbusTCPMaster.readInputRegisters(slaveId, start, len);
-				session.write("写入数据成功 " + bools);
+				session.write(bools);   //读输入寄存器数据
 			}
 
 		}
